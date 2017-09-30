@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="js/jquery-3.2.1.min.js"></script>
+    <script src="js/common.js"></script>
+    <style type="text/css">
+        #outputInfo{
+            resize: none;
+            width: 80%;
+            display:block;
+            height: 20em;
+        }
+        #outputImg{
+            max-width: 100%;
+            display: block;
+            background:#333;
+        }
+    </style>
+</head>
+<body>
+<form onsubmit="return false;">
+    <fieldset>
+        <legend>XML File (M)</legend>
+        <p id="xmlContainer">
+            <label>XML File <input type="file" class="xmlFile" multiple></label>
+        </p>
+        <label >
+            Base XML:
+            <select id="xmlName"></select>
+        </label>
+
+        <label>CSS Path <input type="text" id="path" value='[name="skill1"]'/></label>
+        <button onclick="Convert()">Convert</button>
+    </fieldset>
+</form>
+<hr/>
+
+<label>
+    OutputInfo:
+    <textarea id="outputInfo"></textarea>
+</label>
+<p>
+    <a href="" id="dlink">Download</a>
+    <img src="" id="outputImg"/>
+</p>
+
+
+<p id="imgList"></p>
+</body>
+</html>
