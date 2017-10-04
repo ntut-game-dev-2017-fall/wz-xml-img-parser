@@ -63,8 +63,8 @@ class CanvasInfo {
     constructor(canvasData, index) {
         this.img = new Image();
         this.img.src = "data:image/png;base64," + canvasData.getAttribute('basedata');
-        this.rawDelay = canvasData.querySelector('int[name="delay"]').getAttribute('value') * 1;
-        this.origin = new Vector(canvasData.querySelector('vector[name="origin"]'));
+        this.rawDelay = canvasData.querySelector('[name="delay"]').getAttribute('value') * 1;
+        this.origin = new Vector(canvasData.querySelector('[name="origin"]'));
         this.index = index * 1;
         this.img.setAttribute('index', this.index);
         imgList.appendChild(this.img);
@@ -89,6 +89,7 @@ class CanvasInfo {
         switch (ele.tagName.toLowerCase()) {
             case 'canvas': {
                 let outlink = ele.querySelector(':scope>[name="_outlink"]');
+                let inlink = ele.querySelector(':scope>[name="_inlink"]');
                 if (outlink) {
                     let path = outlink.getAttribute('value').split('/');
                     path.shift();
@@ -105,6 +106,14 @@ class CanvasInfo {
 
                         return CanvasInfo.getInstance(target, index);
                     }
+                } else if (inlink) {
+                    let path = inlink.getAttribute('value').split('/');
+                    let target = ele.parentNode.parentNode;
+                    for (let i = 0; i < path.length; i++) {
+                        target = target.querySelector(`:scope>[name="${path[i]}"]`);
+                    }
+                    
+                    return CanvasInfo.getInstance(target, index);
                 } else {
                     return new CanvasInfo(ele, index);
                 }
@@ -133,12 +142,15 @@ function combineImage(imgdir) {
     let canvasArray = [];
     imgList.innerHTML = '';
     for (let x of imgdir.children) {
-        canvasArray.push(CanvasInfo.getInstance(x));
+        if(x.getAttribute('name').match(/^\d+$/)) {
+            canvasArray.push(CanvasInfo.getInstance(x));
+        }
     }
 
     canvasArray.sort((a, b) => a.index - b.index);
     return new Promise((_done_lol) => {
         Promise.all(canvasArray.map(x => x.done())).then(a => {
+            const IMG_MAX_WIDTH = 3072;
             const DRAW_WIDTH = canvasArray.map(x => x.img.width).max();
             const DRAW_HEIGHT = canvasArray.map(x => x.origin.y).max();
             const PADDING_X = canvasArray.map(x => Math.abs(x.img.width - x.origin.x * 2)).max();
@@ -146,32 +158,44 @@ function combineImage(imgdir) {
             const MAX_WIDTH = PADDING_X + DRAW_WIDTH;
             const MAX_HEIGHT = PADDING_Y + DRAW_HEIGHT;
             const R_WIDTH = MAX_WIDTH;
+            const GRID_SIZE = window.GRID_SIZE!=undefined?window.GRID_SIZE:1;
             
             let outputInfo = {};
             let canvas = document.createElement('canvas');
             
-            canvas.width = canvasArray.length * (R_WIDTH + 1);
-            canvas.height = MAX_HEIGHT + 1;
+            const ALL_WIDTH = canvasArray.length * (R_WIDTH + GRID_SIZE);
+            const ROW_COUNT = Math.ceil(ALL_WIDTH / IMG_MAX_WIDTH);
+            const COL_COUNT = Math.ceil(canvasArray.length / ROW_COUNT);
+            
+            canvas.width = COL_COUNT * (R_WIDTH + GRID_SIZE);
+            canvas.height = ROW_COUNT * (MAX_HEIGHT + GRID_SIZE);
             let ctx = canvas.getContext('2d');
             ctx.fillStyle = "#F0F";
+            const hW = MAX_WIDTH>>1;
+            
             canvasArray.forEach((canvasInfo) => {
                 const i = canvasInfo.index;
-                const X = i * (R_WIDTH + 1), Y = 0;
+                const _C = i % COL_COUNT;
+                const _R = Math.floor(i/COL_COUNT);
+                
+                const X = _C * (R_WIDTH + GRID_SIZE), Y = _R * (MAX_HEIGHT + GRID_SIZE);
                 //Reset translate
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.translate(X + canvasInfo.origin.x, 0);
+                ctx.translate(X + hW, Y);
                 let leftTopPosition = {
-                    x: (-canvasInfo.img.width / 2) | 0,
+                    x: -canvasInfo.origin.x,
                     y: DRAW_HEIGHT - canvasInfo.origin.y,
                 };
                 ctx.drawImage(canvasInfo.img, leftTopPosition.x, leftTopPosition.y);
-                ctx.fillRect(-canvasInfo.origin.x, 0, 1, MAX_HEIGHT);
+                ctx.fillRect(-hW, 0, GRID_SIZE, MAX_HEIGHT);
             });
 
-            const CX = (R_WIDTH / 2) | 1;
+            const CX = (R_WIDTH >>1);
             const CY = DRAW_HEIGHT;
 
             outputInfo.PerSize = {w: R_WIDTH, h: MAX_HEIGHT};
+            outputInfo.Layout = {col: COL_COUNT, row: ROW_COUNT};
+            outputInfo.Pivot = {x: CX / outputInfo.PerSize.w, y: 1 - DRAW_HEIGHT / outputInfo.PerSize.h}
             outputInfo.Count = canvasArray.length;
             outputInfo.CenterBottom = {x: CX, y: CY};
             outputInfo.Delay = canvasArray.map(x => x.rawDelay);
