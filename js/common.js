@@ -158,7 +158,7 @@ function combineImage(imgdir) {
             const MAX_WIDTH = PADDING_X + DRAW_WIDTH;
             const MAX_HEIGHT = PADDING_Y + DRAW_HEIGHT;
             const R_WIDTH = MAX_WIDTH;
-            const GRID_SIZE = window.GRID_SIZE!=undefined?window.GRID_SIZE:1;
+            const GRID_SIZE = window.GRID_SIZE!==undefined?window.GRID_SIZE:0;
             
             let outputInfo = {};
             let canvas = document.createElement('canvas');
@@ -171,6 +171,10 @@ function combineImage(imgdir) {
             canvas.height = ROW_COUNT * (MAX_HEIGHT + GRID_SIZE);
             let ctx = canvas.getContext('2d');
             ctx.fillStyle = "#F0F";
+            ctx.mozImageSmoothingEnabled = false;
+            ctx.webkitImageSmoothingEnabled = false;
+            ctx.msImageSmoothingEnabled = false;
+            ctx.imageSmoothingEnabled = false;
             const hW = MAX_WIDTH>>1;
             
             canvasArray.forEach((canvasInfo) => {
@@ -186,8 +190,9 @@ function combineImage(imgdir) {
                     x: -canvasInfo.origin.x,
                     y: DRAW_HEIGHT - canvasInfo.origin.y,
                 };
-                ctx.drawImage(canvasInfo.img, leftTopPosition.x, leftTopPosition.y);
                 ctx.fillRect(-hW, 0, GRID_SIZE, MAX_HEIGHT);
+                ctx.fillRect(-hW, MAX_HEIGHT, MAX_WIDTH, GRID_SIZE);
+                ctx.drawImage(canvasInfo.img, leftTopPosition.x, leftTopPosition.y);
             });
 
             const CX = (R_WIDTH >>1);
