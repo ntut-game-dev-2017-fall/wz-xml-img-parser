@@ -157,17 +157,16 @@ function combineImage(imgdir) {
             const PADDING_Y = canvasArray.map(x => Math.abs(x.img.height - x.origin.y)).max();
             const MAX_WIDTH = PADDING_X + DRAW_WIDTH;
             const MAX_HEIGHT = PADDING_Y + DRAW_HEIGHT;
-            const R_WIDTH = MAX_WIDTH;
             const GRID_SIZE = window.GRID_SIZE!==undefined?window.GRID_SIZE:0;
             
             let outputInfo = {};
             let canvas = document.createElement('canvas');
             
-            const ALL_WIDTH = canvasArray.length * (R_WIDTH + GRID_SIZE);
+            const ALL_WIDTH = canvasArray.length * (MAX_WIDTH + GRID_SIZE);
             const ROW_COUNT = Math.ceil(ALL_WIDTH / IMG_MAX_WIDTH);
             const COL_COUNT = Math.ceil(canvasArray.length / ROW_COUNT);
             
-            canvas.width = COL_COUNT * (R_WIDTH + GRID_SIZE);
+            canvas.width = COL_COUNT * (MAX_WIDTH + GRID_SIZE);
             canvas.height = ROW_COUNT * (MAX_HEIGHT + GRID_SIZE);
             let ctx = canvas.getContext('2d');
             ctx.fillStyle = "#F0F";
@@ -182,7 +181,7 @@ function combineImage(imgdir) {
                 const _C = i % COL_COUNT;
                 const _R = Math.floor(i/COL_COUNT);
                 
-                const X = _C * (R_WIDTH + GRID_SIZE), Y = _R * (MAX_HEIGHT + GRID_SIZE);
+                const X = _C * (MAX_WIDTH + GRID_SIZE), Y = _R * (MAX_HEIGHT + GRID_SIZE);
                 //Reset translate
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
                 ctx.translate(X + hW, Y);
@@ -195,10 +194,10 @@ function combineImage(imgdir) {
                 ctx.drawImage(canvasInfo.img, leftTopPosition.x, leftTopPosition.y);
             });
 
-            const CX = (R_WIDTH >>1);
+            const CX = (MAX_WIDTH >>1);
             const CY = DRAW_HEIGHT;
 
-            outputInfo.PerSize = {w: R_WIDTH, h: MAX_HEIGHT};
+            outputInfo.PerSize = {w: MAX_WIDTH, h: MAX_HEIGHT};
             outputInfo.Layout = {col: COL_COUNT, row: ROW_COUNT};
             outputInfo.Pivot = {x: CX / outputInfo.PerSize.w, y: 1 - DRAW_HEIGHT / outputInfo.PerSize.h}
             outputInfo.Count = canvasArray.length;
