@@ -1,4 +1,5 @@
 "use strict";
+let UNIT = 16;
 window.jQuery = window.jQuery || {};
 var wzXml = {};
 
@@ -61,10 +62,16 @@ class Vector {
 
 class CanvasInfo {
     constructor(canvasData, index) {
+        let delayEle = canvasData.querySelector('[name="delay"]');
         this.img = new Image();
         this.img.src = "data:image/png;base64," + canvasData.getAttribute('basedata');
-        this.rawDelay = canvasData.querySelector('[name="delay"]').getAttribute('value') * 1;
+        this.rawDelay = delayEle?delayEle.getAttribute('value') * 1:-1;
         this.origin = new Vector(canvasData.querySelector('[name="origin"]'));
+        if(canvasData.querySelector('[name="lt"]')){
+            this.lt = new Vector(canvasData.querySelector('[name="lt"]'));
+            this.rb = new Vector(canvasData.querySelector('[name="rb"]'));
+        }
+        
         this.index = index * 1;
         this.img.setAttribute('index', this.index);
         imgList.appendChild(this.img);
@@ -158,6 +165,8 @@ function combineImage(imgdir) {
             const MAX_WIDTH = PADDING_X + DRAW_WIDTH;
             const MAX_HEIGHT = PADDING_Y + DRAW_HEIGHT;
             const GRID_SIZE = window.GRID_SIZE!==undefined?window.GRID_SIZE:0;
+            const CX = (MAX_WIDTH >>1);
+            const CY = DRAW_HEIGHT;
             
             let outputInfo = {};
             let canvas = document.createElement('canvas');
@@ -175,11 +184,23 @@ function combineImage(imgdir) {
             ctx.msImageSmoothingEnabled = false;
             ctx.imageSmoothingEnabled = false;
             const hW = MAX_WIDTH>>1;
-            
+
+            outputInfo.Collider = [];
+            let colliderOffset = {x: CX / UNIT, y: (CY / 2) / UNIT};
             canvasArray.forEach((canvasInfo) => {
                 const i = canvasInfo.index;
                 const _C = i % COL_COUNT;
                 const _R = Math.floor(i/COL_COUNT);
+                if(canvasInfo.lt){
+                    outputInfo.Collider[i] = {
+                        offset: colliderOffset,
+                        size: {
+                            x: (canvasInfo.rb.x - canvasInfo.lt.x) / UNIT,
+                            y: (canvasInfo.rb.y - canvasInfo.lt.y) / UNIT,
+                        },
+                    };
+                }
+                
                 
                 const X = _C * (MAX_WIDTH + GRID_SIZE), Y = _R * (MAX_HEIGHT + GRID_SIZE);
                 //Reset translate
@@ -194,12 +215,14 @@ function combineImage(imgdir) {
                 ctx.drawImage(canvasInfo.img, leftTopPosition.x, leftTopPosition.y);
             });
 
-            const CX = (MAX_WIDTH >>1);
-            const CY = DRAW_HEIGHT;
+
+            if(outputInfo.Collider.every(c=>outputInfo.Collider[0].size.x==c.size.x && outputInfo.Collider[0].size.y==c.size.y)) {
+                outputInfo.Collider = outputInfo.Collider[0];
+            }
 
             outputInfo.PerSize = {w: MAX_WIDTH, h: MAX_HEIGHT};
             outputInfo.Layout = {col: COL_COUNT, row: ROW_COUNT};
-            outputInfo.Pivot = {x: CX / outputInfo.PerSize.w, y: 1 - DRAW_HEIGHT / outputInfo.PerSize.h}
+            outputInfo.Pivot = {x: CX / outputInfo.PerSize.w, y: DRAW_HEIGHT / 2 / outputInfo.PerSize.h}
             outputInfo.Count = canvasArray.length;
             outputInfo.CenterBottom = {x: CX, y: CY};
             outputInfo.Delay = canvasArray.map(x => x.rawDelay);
