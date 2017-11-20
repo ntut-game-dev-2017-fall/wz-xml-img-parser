@@ -186,7 +186,7 @@ function combineImage(imgdir) {
             const hW = MAX_WIDTH>>1;
 
             outputInfo.Collider = [];
-            let colliderOffset = {x: CX / UNIT, y: (CY / 2) / UNIT};
+            let colliderOffset = {x: 0.5, y: (CY / 2) / UNIT};
             canvasArray.forEach((canvasInfo) => {
                 const i = canvasInfo.index;
                 const _C = i % COL_COUNT;
@@ -222,7 +222,7 @@ function combineImage(imgdir) {
 
             outputInfo.PerSize = {w: MAX_WIDTH, h: MAX_HEIGHT};
             outputInfo.Layout = {col: COL_COUNT, row: ROW_COUNT};
-            outputInfo.Pivot = {x: CX / outputInfo.PerSize.w, y: DRAW_HEIGHT / 2 / outputInfo.PerSize.h}
+            outputInfo.Pivot = {x: CX / outputInfo.PerSize.w, y: 1 - DRAW_HEIGHT / outputInfo.PerSize.h}
             outputInfo.Count = canvasArray.length;
             outputInfo.CenterBottom = {x: CX, y: CY};
             outputInfo.Delay = canvasArray.map(x => x.rawDelay);
